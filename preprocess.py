@@ -4,15 +4,16 @@ import os
 from scraper import save_lyrics_to_file
 import numpy as np
 from keras.utils import np_utils
+import lyricsgenius as lg
 
 scrape_dir = "scrapes/"
 process_dir = "processed/"
 
 
-def run(path_to_file, artist_name, num_songs, dir = "scrapes/", file_name = None):
+def run(path_to_file: str, artist_name: str, num_songs: int, dir: int = "scrapes/", file_name = None):
     """ Runs the preprocessing script. 
     Args: 
-        filename: path to the file to save the lyrics to
+        path_to_file: path to the file to save the lyrics to
         artist_name: name of the artist
         num_songs: number of songs to return
         dir: dir to save the file to (include / at the end) Default: scrapes/
@@ -42,10 +43,12 @@ def run(path_to_file, artist_name, num_songs, dir = "scrapes/", file_name = None
     print("Generating character embeddings")
 
     char_to_idx, idx_to_char, num_embeddings = _create_character_embeddings(all_lyrics)
-    embedded_lyrics = [char_to_idx[char] for char in all_lyrics]
+    embedded_lyrics = np.array([char_to_idx[char] for char in all_lyrics])
 
     print("Generating train data")
     X_vectors, Y_vectors = _create_train_vectors(embedded_lyrics, num_embeddings, context_size = 100)
+
+    return("Implementation in progress")
 
 
     
@@ -73,12 +76,12 @@ def _create_character_embeddings(lyrics: str) -> tuple[dict, dict, int]:
         idx_to_char: dictionary of indices to characters
         n_embeddings: number of embeddings
     """
-    chars = sorted(set(str))
+    chars = sorted(set(lyrics))
     char_to_idx = {char: i for i, char in enumerate(chars)}
     idx_to_char = {i: char for i, char in enumerate(chars)}
     return char_to_idx, idx_to_char, len(char_to_idx)
 
-def _read_string_from_file(file_path: str) -> str:
+def _read_string_from_file(file_path: str) -> str :
     """ Reads a file as a string. 
     Args: 
         file_path: path to the file
@@ -88,7 +91,7 @@ def _read_string_from_file(file_path: str) -> str:
     with open(file_path, "r") as f:
         return f.read()    
 
-def _read_file_as_json(path_to_file: str) -> dict:
+def _read_file_as_json(path_to_file: str) -> dict :
     """ Reads a file as json. 
     Args: 
         path_to_file: path to the file
@@ -105,13 +108,13 @@ def _write_lyrics_to_file(artist, path_to_file: str):
         path_to_file: path to the file
     Returns: all_lyrics (str): lyrics as one string
     """
-    all_lyrics = '\n'.join(song.lyrics for song in artist.songs)
+    all_lyrics = '\n'.join(song["lyrics"] for song in artist["songs"])
     with open(path_to_file, 'w',encoding="utf-8") as file:
         file.write(all_lyrics)
     return all_lyrics
     
 
-def _file_exists(file_path):
+def _file_exists(file_path: str) -> bool :
     """ Checks if a file exists. 
     Args: 
         file_path: path to the file
