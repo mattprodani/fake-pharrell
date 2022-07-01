@@ -1,0 +1,9 @@
+{
+    "context_size" : 100,
+    "artist_name" : "Taylor Swift",
+    "path_to_scrape" : "scrapes/Pharrell Williams.json",
+    "num_songs" : 25,
+    "output_dir" : "processed/",
+    "do_not_scrape" : true,
+    "re_process" : false
+}

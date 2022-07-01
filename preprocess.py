@@ -1,42 +1,36 @@
 from importlib.resources import path
 import json
 import os
-from scraper import save_lyrics_to_file
 import numpy as np
 from keras.utils import np_utils
 import lyricsgenius as lg
 
-scrape_dir = "scrapes/"
-process_dir = "processed/"
 
 
-def run(path_to_file: str, artist_name: str, num_songs: int, dir: int = "scrapes/", file_name = None):
+def tokenize(config: dict):
     """ Runs the preprocessing script. 
     Args: 
-        path_to_file: path to the file to save the lyrics to
-        artist_name: name of the artist
-        num_songs: number of songs to return
-        dir: dir to save the file to (include / at the end) Default: scrapes/
-        file_name: name of the file to save the lyrics, leave blank to use artist name
+        config(json): config object
+    Returns:
+        X_vectors (np.ndarray): input vectors
+        Y_vectors (np.ndarray): output vectors
+        char_to_idx (dict): dictionary of characters to embedding
+        idx_to_char (dict): dictionary of embedding to characters
     """
-    
-
-    if _file_exists(path_to_file):
-        print("Found artist file")
-    else:
-        print("Did not find artist file, processing lyrics from API")
-        save_lyrics_to_file(artist_name, num_songs, file_name=path_to_file)
-
-    artist_data = _read_file_as_json(path_to_file)
-    print("Found {} songs".format(len(artist_data["songs"])))
+    artist_name = config.get("artist_name")
+    num_songs = config.get("num_songs")
+    path_to_scrape = config.get("path_to_scrape")
+    output_dir = config.get("output_dir")
+    context_size = config.get("context_size")
 
 
-    print("Saving lyrics to file")
-    all_lyrics_path = process_dir + artist_name + ".txt"
-    if _file_exists(all_lyrics_path):
+    all_lyrics_path = output_dir + artist_name + ".txt"
+    if _file_exists(all_lyrics_path) and not config.get("re_process"):
         print("Found lyrics text file, loading")
         all_lyrics = _read_string_from_file(all_lyrics_path)
     else:
+        artist_data = _read_file_as_json(path_to_scrape)
+        print("Found {} songs".format(len(artist_data["songs"])))
         all_lyrics = _write_lyrics_to_file(artist_data, all_lyrics_path)
         print("Lyrics saved to file")
     
@@ -46,9 +40,10 @@ def run(path_to_file: str, artist_name: str, num_songs: int, dir: int = "scrapes
     embedded_lyrics = np.array([char_to_idx[char] for char in all_lyrics])
 
     print("Generating train data")
-    X_vectors, Y_vectors = _create_train_vectors(embedded_lyrics, num_embeddings, context_size = 100)
+    X_vectors, Y_vectors = _create_train_vectors(embedded_lyrics, num_embeddings, context_size)
 
-    return("Implementation in progress")
+    print("Implementation in progress")
+    return X_vectors, Y_vectors, char_to_idx, idx_to_char
 
 
     
@@ -109,6 +104,8 @@ def _write_lyrics_to_file(artist, path_to_file: str):
     Returns: all_lyrics (str): lyrics as one string
     """
     all_lyrics = '\n'.join(song["lyrics"] for song in artist["songs"])
+    all_lyrics.replace("Embed", "")
+    
     with open(path_to_file, 'w',encoding="utf-8") as file:
         file.write(all_lyrics)
     return all_lyrics
